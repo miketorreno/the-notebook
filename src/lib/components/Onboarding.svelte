@@ -1,13 +1,15 @@
 <script lang="ts">
   import { generateMnemonic, normalizeMnemonic, secureEqual } from '../mnemonic'
+  import ArchetypeSelector from './ArchetypeSelector.svelte'
+  import type { ArchetypeId } from '../archetype'
 
   interface Props {
-    onComplete: (mnemonic: string) => void
+    onComplete: (result: { mnemonic: string; archetype: ArchetypeId }) => void
   }
 
   const { onComplete }: Props = $props()
 
-  let step: 'intro' | 'display' | 'confirm' = $state('intro')
+  let step: 'intro' | 'display' | 'confirm' | 'archetype' = $state('intro')
   let mnemonic = $state('')
   let confirmInput = $state('')
   let copied = $state(false)
@@ -32,7 +34,7 @@
     const normalised = normalizeMnemonic(confirmInput)
     if (await secureEqual(normalised, mnemonic)) {
       confirmError = false
-      onComplete(mnemonic)
+      step = 'archetype'
     } else {
       confirmError = true
     }
@@ -111,6 +113,12 @@
           Confirm
         </button>
       </div>
+    </section>
+
+  {:else if step === 'archetype'}
+    <section class="card surface">
+      <h1 class="h2">Choose your archetype</h1>
+      <ArchetypeSelector onSelect={(id) => onComplete({ mnemonic, archetype: id })} />
     </section>
   {/if}
 </div>
