@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+/* Drive Tailwind's `dark:` variant and Skeleton's `@variant dark` from the
+   `data-mode` attribute we set on <html>, so users can toggle manually.
+   Falls back to no prefix, meaning the attribute controls dark mode. */
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+/* Keep color-scheme in sync so Skeleton's light-dark() tokens follow the toggle. */
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-mode='light'],
+:root:not([data-mode]) {
+  color-scheme: light;
+}
