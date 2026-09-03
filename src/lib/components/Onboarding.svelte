@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { generateMnemonic, normalizeMnemonic } from '../mnemonic/mnemonic'
+  import { generateMnemonic, normalizeMnemonic, secureEqual } from '../mnemonic'
 
   interface Props {
     onComplete: (mnemonic: string) => void
@@ -29,20 +29,13 @@
   }
 
   async function checkConfirmation() {
-    if (await matches(normalizeMnemonic(confirmInput), mnemonic)) {
+    const normalised = normalizeMnemonic(confirmInput)
+    if (await secureEqual(normalised, mnemonic)) {
       confirmError = false
       onComplete(mnemonic)
     } else {
       confirmError = true
     }
-  }
-
-  // Compare digests rather than the raw strings to avoid leaking the mnemonic
-  // through timing in the equality check.
-  async function matches(a: string, b: string): Promise<boolean> {
-    const data = new TextEncoder().encode(`${a}\u0000${b}`)
-    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', data))
-    return digest.every((byte) => byte === 0)
   }
 
   const wordCount = $derived(mnemonic ? mnemonic.split(' ').length : 0)
@@ -162,6 +155,7 @@
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-base);
     background: var(--color-surface-100);
+    color: var(--color-surface-contrast-100);
     font-family: monospace;
     font-size: 0.9rem;
     border: 1px solid var(--color-surface-200);
