@@ -1,13 +1,21 @@
 <script lang="ts">
   import { onMount } from 'svelte'
+  import Onboarding from './lib/components/Onboarding.svelte'
+  import { needsOnboarding, saveRecoverySalt } from './lib/mnemonic'
+  import { generateSalt } from './lib/crypto/crypto'
 
-  let mode: 'light' | 'dark' = 'light'
+  let mode: 'light' | 'dark' = $state('light')
+  let onboarded = $state(false)
+  let loading = $state(true)
 
   onMount(() => {
     const stored = localStorage.getItem('theme-mode')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     mode = stored === 'dark' || (stored === null && prefersDark) ? 'dark' : 'light'
     applyMode(mode)
+
+    onboarded = !needsOnboarding()
+    loading = false
   })
 
   function toggleMode() {
@@ -18,6 +26,15 @@
 
   function applyMode(next: 'light' | 'dark') {
     document.documentElement.dataset.mode = next
+  }
+
+  async function handleOnboardingComplete(_mnemonic: string) {
+    // Persist the non-secret salt; the AES key is re-derived from the
+    // recovery phrase + salt on demand (see crypto/deriveKey). Nothing is
+    // sent to a server.
+    const salt = generateSalt()
+    saveRecoverySalt(salt)
+    onboarded = true
   }
 </script>
 
@@ -43,32 +60,44 @@
     </button>
   </header>
 
-  <main class="content">
-    <section class="hero surface">
-      <div class="hero-mark" aria-hidden="true">
-        {#each [0, 1, 2] as i}
-          <span class="orbit orbit-{i}">
-            <span class="node"></span>
-          </span>
-        {/each}
-        <span class="core"></span>
-      </div>
-      <h1 class="h1">All of your life, one encrypted vault.</h1>
-      <p class="lead">
-        The Platform will turn Health, Learning, and Productivity into an
-        RPG adventure — stored locally, encrypted with AES-256-GCM, and never sent
-        anywhere without your consent.
-      </p>
-      <p class="tags">
-        <span class="chip variant-filled-surface">Local-first</span>
-        <span class="chip variant-filled-surface">E2E encrypted</span>
-        <span class="chip variant-filled-surface">No accounts</span>
-      </p>
-    </section>
-  </main>
+  {#if loading}
+    <main class="content">
+      <p>Loading...</p>
+    </main>
+  {:else if !onboarded}
+    <Onboarding onComplete={handleOnboardingComplete} />
+  {:else}
+    <main class="content">
+      <section class="hero surface">
+        <div class="hero-mark" aria-hidden="true">
+          {#each [0, 1, 2] as i}
+            <span class="orbit orbit-{i}">
+              <span class="node"></span>
+            </span>
+          {/each}
+          <span class="core"></span>
+        </div>
+        <h1 class="h1">All of your life, one encrypted vault.</h1>
+        <p class="lead">
+          The Platform will turn Health, Learning, and Productivity into an
+          RPG adventure — stored locally, encrypted with AES-256-GCM, and never sent
+          anywhere without your consent.
+        </p>
+        <p class="tags">
+          <span class="chip variant-filled-surface">Local-first</span>
+          <span class="chip variant-filled-surface">E2E encrypted</span>
+          <span class="chip variant-filled-surface">No accounts</span>
+        </p>
+      </section>
+    </main>
+  {/if}
 
   <footer class="footer">
-    <span>Ready for onboarding in the next slice.</span>
+    {#if onboarded}
+      <span>Your recovery key is saved locally. Archetype selection coming next.</span>
+    {:else}
+      <span>Set up your recovery key to get started.</span>
+    {/if}
   </footer>
 </div>
 
