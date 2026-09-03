@@ -4,9 +4,9 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] PWA installs and runs offline (service worker + manifest)
-- [ ] Encrypted IndexedDB store persists and retrieves a record round-trip
-- [ ] Data is stored encrypted (AES-256-GCM) at rest
-- [ ] Abstract/symbolic visual base + dark mode support in place
+- [x] PWA installs and runs offline (service worker + manifest)
+- [x] Encrypted IndexedDB store persists and retrieves a record round-trip
+- [x] Data is stored encrypted (AES-256-GCM) at rest
+- [x] Abstract/symbolic visual base + dark mode support in place
