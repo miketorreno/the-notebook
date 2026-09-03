@@ -7,9 +7,11 @@ RUN npm run build
 
 FROM nginx:stable-alpine AS production
 COPY --from=build /app/dist /usr/share/nginx/html
-RUN rm /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/conf.d/default.conf \
+    && mkdir -p /tmp/nginx \
+    && chown -R nginx:nginx /tmp/nginx /usr/share/nginx/html
+COPY docker/nginx-main.conf /etc/nginx/nginx.conf
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-RUN chown -R nginx:nginx /usr/share/nginx/html
 USER nginx
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
