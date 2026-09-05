@@ -34,7 +34,16 @@ export interface ProgressionEvent {
 
 export interface ProgressionStore {
   get(key: CryptoKey): Promise<ProgressionInfo>
-  recordActivity(activity: Activity, key: CryptoKey): Promise<ProgressionEvent>
+  /**
+   * Record a logged activity: +1 completion and its XP (optionally scaled
+   * by an XP bonus multiplier, e.g. 1.5 during a bonus week) toward the
+   * total.
+   */
+  recordActivity(
+    activity: Activity,
+    key: CryptoKey,
+    multiplier?: number,
+  ): Promise<ProgressionEvent>
   recordQuestXp(xp: number, key: CryptoKey): Promise<ProgressionEvent>
   destroy(): Promise<void>
 }
@@ -143,15 +152,20 @@ export async function openProgressionStore(
       return record ? fromRecord(record) : buildProgression(0, 0, [], now())
     },
 
-    async recordActivity(activity: Activity, key: CryptoKey): Promise<ProgressionEvent> {
+    async recordActivity(
+      activity: Activity,
+      key: CryptoKey,
+      multiplier = 1,
+    ): Promise<ProgressionEvent> {
       const record = await currentRecord(key)
       const previous = record ? fromRecord(record) : buildProgression(0, 0, [], now())
       const completionDays = uniqueCompletionDays([
         ...(record?.completionDays ?? []),
         completionDayKey(activity.completedAt),
       ])
+      const earned = Math.round(activity.xp * multiplier)
       const progression = buildProgression(
-        previous.totalXp + activity.xp,
+        previous.totalXp + earned,
         previous.cumulativeCompletions + 1,
         completionDays,
         now(),

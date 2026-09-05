@@ -6,6 +6,12 @@
     type ProgressionInfo,
     type ProgressionStore,
   } from '../progression'
+  import {
+    openWellRoundedStore,
+    WELL_ROUNDED_XP_MULTIPLIER,
+    type WellRoundedStatus,
+    type WellRoundedStore,
+  } from '../well-rounded'
 
   interface Props {
     key: CryptoKey
@@ -19,9 +25,12 @@
   let store: ProgressionStore | undefined = $state(undefined)
   let progression = $state<ProgressionInfo | null>(null)
   let levelUpNotice = $state('')
+  let wellRoundedStore: WellRoundedStore | undefined = $state(undefined)
+  let wellRounded = $state<WellRoundedStatus | null>(null)
 
   onMount(async () => {
     store = await openProgressionStore(dbName)
+    wellRoundedStore = await openWellRoundedStore(dbName)
     await refresh()
   })
 
@@ -33,6 +42,7 @@
   async function refresh() {
     if (!store) return
     progression = await store.get(key)
+    wellRounded = wellRoundedStore ? await wellRoundedStore.getStatus(key) : null
     if (event?.leveledUp) {
       levelUpNotice = `Level up! ${event.previous.level} → ${event.progression.level}`
       setTimeout(() => { levelUpNotice = '' }, 4000)
@@ -89,6 +99,18 @@
       </span>
     </div>
   </div>
+
+  {#if wellRounded?.active}
+    <div class="well-rounded" role="status" title="Well-Rounded bonus active: all three domains tracked this week">
+      <svg class="wr-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+        <circle cx="12" cy="12" r="3.5" fill="currentColor" />
+        <circle cx="19" cy="7" r="2" fill="currentColor" opacity="0.7" />
+      </svg>
+      <span class="wr-title">Well-Rounded</span>
+      <span class="wr-multiplier">{WELL_ROUNDED_XP_MULTIPLIER}× XP</span>
+    </div>
+  {/if}
 
   {#if levelUpNotice}
     <div class="level-up" role="status">{levelUpNotice}</div>
@@ -181,6 +203,34 @@
     font-weight: 700;
     font-size: 0.9rem;
     box-shadow: var(--shadow-elevation-base);
+  }
+
+  .well-rounded {
+    position: absolute;
+    inset: -12px auto auto 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 9999px;
+    background: var(--color-primary-100);
+    color: var(--color-primary-600);
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-elevation-base);
+  }
+
+  .wr-icon { color: var(--color-primary-500); }
+
+  .wr-title { letter-spacing: 0.3px; }
+
+  .wr-multiplier {
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background: var(--color-primary-500);
+    color: var(--color-primary-contrast, #fff);
   }
 
   @media (max-width: 700px) {

@@ -17,6 +17,10 @@
     type ProgressionEvent,
     type ProgressionStore,
   } from '../progression'
+  import {
+    openWellRoundedStore,
+    type WellRoundedStore,
+  } from '../well-rounded'
 
   interface Props {
     key: CryptoKey
@@ -31,6 +35,7 @@
 
   let store: ActivityStore | undefined = $state(undefined)
   let progressionStore: ProgressionStore | undefined = $state(undefined)
+  let wellRoundedStore: WellRoundedStore | undefined = $state(undefined)
   let difficulty = $state<Difficulty>('Medium')
   let notes = $state('')
   let history: Activity[] = $state([])
@@ -42,6 +47,7 @@
   onMount(async () => {
     store = await openActivityStore(dbName)
     progressionStore = await openProgressionStore(dbName)
+    wellRoundedStore = await openWellRoundedStore(dbName)
     await refresh()
   })
 
@@ -58,7 +64,7 @@
   }
 
   async function log(domain: Domain, type: string) {
-    if (!store || !progressionStore) return
+    if (!store || !progressionStore || !wellRoundedStore) return
     const activity = buildActivity({
       domain,
       type,
@@ -66,7 +72,14 @@
       ...(notes.trim() ? { notes: notes.trim() } : {}),
     })
     await store.logActivity(activity, key)
-    const event = await progressionStore.recordActivity(activity, key)
+    // The well-rounded bonus is evaluated after the activity is stored, so
+    // the just-logged domain counts toward the 7-day window.
+    const status = await wellRoundedStore.getStatus(key)
+    const event = await progressionStore.recordActivity(
+      activity,
+      key,
+      status.multiplier,
+    )
     if (notes.trim()) notes = ''
     await refresh()
     onLog?.(event)

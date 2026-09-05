@@ -171,6 +171,31 @@ describe('progression store', () => {
     expect(info.cumulativeCompletions).toBe(2)
   })
 
+  it('applies an XP multiplier to the credited activity XP', async () => {
+    const key = await testKey()
+
+    const event = await store.recordActivity(
+      buildActivity({ domain: 'Health', type: 'Exercise', difficulty: 'Medium' }),
+      key,
+      1.5,
+    )
+    expect(event.progression.totalXp).toBe(38)
+    expect(event.progression.cumulativeCompletions).toBe(1)
+  })
+
+  it('uses the base XP when no multiplier is given', async () => {
+    const key = await testKey()
+    const event = await store.recordActivity(easyActivity(), key)
+    expect(event.progression.totalXp).toBe(10)
+  })
+
+  it('rounds a multiplied XP total to whole numbers', async () => {
+    const key = await testKey()
+    const event = await store.recordActivity(easyActivity(), key, 1.5)
+    expect(event.progression.totalXp).toBe(15)
+    expect(event.progression.xpIntoLevel).toBe(15)
+  })
+
   it('builds a grace-bridged current streak from recorded completion days', async () => {
     const key = await testKey()
     const pinnedStore = await openProgressionStore(DB + '-pinned-bridge', {

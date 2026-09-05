@@ -4,8 +4,17 @@
 
 **Blocked by:** 07
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Well-Rounded achievement triggers on tracking all three domains within 7 days
-- [ ] 1.5x XP multiplier applied for the week
-- [ ] Visual badge/icon appears on dashboard
+- [x] Well-Rounded achievement triggers on tracking all three domains within 7 days
+- [x] 1.5x XP multiplier applied for the week
+- [x] Visual badge/icon appears on dashboard
+
+## Comments
+
+Closed by the commit implementing the well-rounded module (trailing 7-day
+window detection over the three domains, the `WELL_ROUNDED_XP_MULTIPLIER`
+1.5x applied to activity XP through an optional multiplier on the progression
+store's `recordActivity`), the encrypted well-rounded achievement store that
+persists the first unlock, and the dashboard badge shown on the progression
+panel while the bonus is active.

@@ -40,6 +40,10 @@ _Avoid_: Points, score, credit
 Major progression milestones (Bronze → Silver → Gold → Platinum). Each tier unlocks new content, cosmetics, or capabilities. Within tiers, XP accumulates toward the next level.
 _Avoid_: Rank, league, division
 
+**Well-Rounded Bonus**:
+A weekly cross-domain bonus. Track all three domains within a 7-day window and activity XP is multiplied by 1.5 for the week. First "Well-Rounded" week unlocks the achievement permanently and shows a badge on the dashboard. Incentivizes balanced life tracking.
+_Avoid_: Balanced bonus, multiplier (the multiplier is the mechanic; Well-Rounded is the reward)
+
 **Narrative Layer**:
 The story infrastructure that gives mechanics meaning. User is always the protagonist. Quests are framed through archetype-specific language. Setbacks become plot complications, not failures.
 _Aavoid_: Theme, story, lore (too decorative; this is structural)
