@@ -3,6 +3,7 @@
   import Onboarding from './lib/components/Onboarding.svelte'
   import ArchetypeSelector from './lib/components/ArchetypeSelector.svelte'
   import ActivityLog from './lib/components/ActivityLog.svelte'
+  import ProgressionPanel from './lib/components/ProgressionPanel.svelte'
   import {
     needsOnboarding,
     saveRecoverySalt,
@@ -19,6 +20,7 @@
     setArchetype,
     type ArchetypeId,
   } from './lib/archetype'
+  import type { ProgressionEvent } from './lib/progression'
 
   let mode: 'light' | 'dark' = $state('light')
   let onboarded = $state(false)
@@ -30,6 +32,7 @@
   let changeStep: 'select' | 'justify' = $state('select')
   let pendingArchetype = $state<ArchetypeId | null>(null)
   let justification = $state('')
+  let lastProgressionEvent = $state<ProgressionEvent | null>(null)
 
   onMount(() => {
     const stored = localStorage.getItem('theme-mode')
@@ -222,7 +225,8 @@
             <button class="btn variant-soft sm" onclick={beginArchetypeChange}>Change archetype</button>
           </p>
         {/if}
-        <ActivityLog key={sessionKey} />
+        <ProgressionPanel key={sessionKey} event={lastProgressionEvent} />
+        <ActivityLog key={sessionKey} onLog={(event) => (lastProgressionEvent = event)} />
       </main>
     {/if}
   {/if}

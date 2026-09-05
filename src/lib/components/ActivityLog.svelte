@@ -12,15 +12,23 @@
     type Difficulty,
   } from '../activity'
   import { DOMAINS, type Domain } from '../archetype'
+  import {
+    openProgressionStore,
+    type ProgressionEvent,
+    type ProgressionStore,
+  } from '../progression'
 
   interface Props {
     key: CryptoKey
     dbName?: string
+    /** Called with the progression event after an activity is logged. */
+    onLog?: (event: ProgressionEvent) => void
   }
 
-  const { key, dbName = 'the-platform' }: Props = $props()
+  const { key, dbName = 'the-platform', onLog }: Props = $props()
 
   let store: ActivityStore | undefined = $state(undefined)
+  let progressionStore: ProgressionStore | undefined = $state(undefined)
   let difficulty = $state<Difficulty>('Medium')
   let notes = $state('')
   let history: Activity[] = $state([])
@@ -31,6 +39,7 @@
 
   onMount(async () => {
     store = await openActivityStore(dbName)
+    progressionStore = await openProgressionStore(dbName)
     await refresh()
   })
 
@@ -47,7 +56,7 @@
   }
 
   async function log(domain: Domain, type: string) {
-    if (!store) return
+    if (!store || !progressionStore) return
     const activity = buildActivity({
       domain,
       type,
@@ -55,8 +64,10 @@
       ...(notes.trim() ? { notes: notes.trim() } : {}),
     })
     await store.logActivity(activity, key)
+    const event = await progressionStore.recordActivity(activity, key)
     if (notes.trim()) notes = ''
     await refresh()
+    onLog?.(event)
   }
 
   async function createType() {

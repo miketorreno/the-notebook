@@ -117,6 +117,12 @@ export async function openStore(
   }
 }
 
+/**
+ * Open the database at its current version, creating missing object stores
+ * by bumping the schema version once when the caller asks for a collection
+ * that does not exist yet. This lets later modules extend a shared vault
+ * database regardless of which store opened it first.
+ */
 function openDatabase(
   dbName: string,
   collections: string[],
@@ -131,7 +137,30 @@ function openDatabase(
         }
       }
     }
-    request.onsuccess = () => resolve(request.result)
+    request.onsuccess = () => {
+      const db = request.result
+      const missing = collections.filter(
+        (c) => !db.objectStoreNames.contains(c),
+      )
+      if (missing.length === 0) {
+        resolve(db)
+        return
+      }
+      // The caller needs stores this database version does not have yet —
+      // close and reopen one version higher to create them.
+      db.close()
+      const upgrade = indexedDB.open(dbName, db.version + 1)
+      upgrade.onupgradeneeded = () => {
+        for (const collection of missing) {
+          if (!upgrade.result.objectStoreNames.contains(collection)) {
+            upgrade.result.createObjectStore(collection)
+          }
+        }
+      }
+      upgrade.onsuccess = () => resolve(upgrade.result)
+      upgrade.onerror = () => reject(upgrade.error)
+      upgrade.onblocked = () => reject(new Error(`Database upgrade blocked: ${dbName}`))
+    }
     request.onerror = () => reject(request.error)
   })
 }

@@ -3,8 +3,8 @@ import type { JsonValue } from '../crypto/crypto'
 import type { Domain } from '../archetype'
 import type { Activity } from './activity'
 
-const ACTIVITIES_COLLECTION = 'activities'
-const TYPES_COLLECTION = 'activityTypes'
+export const ACTIVITIES_COLLECTION = 'activities'
+export const ACTIVITY_TYPES_COLLECTION = 'activityTypes'
 
 export interface ActivityType {
   value: string
@@ -27,7 +27,7 @@ export interface ActivityStore {
  * collections — they reveal habit patterns and are treated as sensitive.
  */
 export async function openActivityStore(dbName: string): Promise<ActivityStore> {
-  const store = await openStore(dbName, [ACTIVITIES_COLLECTION, TYPES_COLLECTION])
+  const store = await openStore(dbName, [ACTIVITIES_COLLECTION, ACTIVITY_TYPES_COLLECTION])
 
   return {
     async logActivity(activity: Activity, key: CryptoKey): Promise<void> {
@@ -59,7 +59,7 @@ export async function openActivityStore(dbName: string): Promise<ActivityStore> 
     async setActivityType(value: string, domain: Domain, key: CryptoKey): Promise<void> {
       // Key on `domain:value` so the same type name can live in two domains.
       await store.save({
-        collection: TYPES_COLLECTION,
+        collection: ACTIVITY_TYPES_COLLECTION,
         id: `${domain}:${value}`,
         record: { value, domain },
         key,
@@ -67,7 +67,7 @@ export async function openActivityStore(dbName: string): Promise<ActivityStore> 
     },
 
     async listActivityTypes(key: CryptoKey): Promise<ActivityType[]> {
-      const entries = await store.list({ collection: TYPES_COLLECTION, key })
+      const entries = await store.list({ collection: ACTIVITY_TYPES_COLLECTION, key })
       return entries.map((e) => e.value as unknown as ActivityType)
     },
 
