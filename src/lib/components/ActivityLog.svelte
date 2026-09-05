@@ -23,9 +23,11 @@
     dbName?: string
     /** Called with the progression event after an activity is logged. */
     onLog?: (event: ProgressionEvent) => void
+    /** Called with the raw activity so sibling panels can react to it. */
+    onActivity?: (activity: Activity) => void
   }
 
-  const { key, dbName = 'the-platform', onLog }: Props = $props()
+  const { key, dbName = 'the-platform', onLog, onActivity }: Props = $props()
 
   let store: ActivityStore | undefined = $state(undefined)
   let progressionStore: ProgressionStore | undefined = $state(undefined)
@@ -68,6 +70,7 @@
     if (notes.trim()) notes = ''
     await refresh()
     onLog?.(event)
+    onActivity?.(activity)
   }
 
   async function createType() {

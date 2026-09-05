@@ -35,6 +35,7 @@ export interface ProgressionEvent {
 export interface ProgressionStore {
   get(key: CryptoKey): Promise<ProgressionInfo>
   recordActivity(activity: Activity, key: CryptoKey): Promise<ProgressionEvent>
+  recordQuestXp(xp: number, key: CryptoKey): Promise<ProgressionEvent>
   destroy(): Promise<void>
 }
 
@@ -152,6 +153,24 @@ export async function openProgressionStore(
       const progression = buildProgression(
         previous.totalXp + activity.xp,
         previous.cumulativeCompletions + 1,
+        completionDays,
+        now(),
+      )
+      await saveRecord(toRecord(progression, completionDays), key)
+      return {
+        progression,
+        previous,
+        leveledUp: progression.level > previous.level,
+      }
+    },
+
+    async recordQuestXp(xp: number, key: CryptoKey): Promise<ProgressionEvent> {
+      const record = await currentRecord(key)
+      const previous = record ? fromRecord(record) : buildProgression(0, 0, [], now())
+      const completionDays = record?.completionDays ?? []
+      const progression = buildProgression(
+        previous.totalXp + xp,
+        previous.cumulativeCompletions,
         completionDays,
         now(),
       )

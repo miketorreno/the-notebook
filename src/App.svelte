@@ -4,6 +4,8 @@
   import ArchetypeSelector from './lib/components/ArchetypeSelector.svelte'
   import ActivityLog from './lib/components/ActivityLog.svelte'
   import ProgressionPanel from './lib/components/ProgressionPanel.svelte'
+  import QuestPanel from './lib/components/QuestPanel.svelte'
+  import type { Activity } from './lib/activity'
   import {
     needsOnboarding,
     saveRecoverySalt,
@@ -33,6 +35,7 @@
   let pendingArchetype = $state<ArchetypeId | null>(null)
   let justification = $state('')
   let lastProgressionEvent = $state<ProgressionEvent | null>(null)
+  let lastActivity = $state<Activity | null>(null)
 
   onMount(() => {
     const stored = localStorage.getItem('theme-mode')
@@ -226,7 +229,16 @@
           </p>
         {/if}
         <ProgressionPanel key={sessionKey} event={lastProgressionEvent} />
-        <ActivityLog key={sessionKey} onLog={(event) => (lastProgressionEvent = event)} />
+        <QuestPanel
+          key={sessionKey}
+          activity={lastActivity}
+          onXp={(event) => (lastProgressionEvent = event)}
+        />
+        <ActivityLog
+          key={sessionKey}
+          onLog={(event) => (lastProgressionEvent = event)}
+          onActivity={(activity) => (lastActivity = activity)}
+        />
       </main>
     {/if}
   {/if}

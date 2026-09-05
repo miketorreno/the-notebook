@@ -202,4 +202,48 @@ describe('progression store', () => {
     await pinnedStore.destroy()
     indexedDB.deleteDatabase(DB + '-pinned-reset')
   })
+
+  it('credits quest XP without counting it as an activity completion', async () => {
+    const key = await testKey()
+    await store.recordActivity(easyActivity(), key)
+
+    const event = await store.recordQuestXp(25, key)
+    expect(event.progression.totalXp).toBe(35)
+    expect(event.progression.cumulativeCompletions).toBe(1)
+    expect(event.progression.level).toBe(1)
+    expect(event.leveledUp).toBe(false)
+  })
+
+  it('rewards quest XP to a player with no activity history yet', async () => {
+    const key = await testKey()
+
+    const event = await store.recordQuestXp(50, key)
+    expect(event.progression.totalXp).toBe(50)
+    expect(event.progression.cumulativeCompletions).toBe(0)
+  })
+
+  it('quest XP can push a player across a level boundary', async () => {
+    const key = await testKey()
+    for (let i = 0; i < 8; i++) {
+      await store.recordActivity(easyActivity(), key)
+    }
+
+    const event = await store.recordQuestXp(20, key)
+    expect(event.leveledUp).toBe(true)
+    expect(event.previous.level).toBe(1)
+    expect(event.progression.level).toBe(2)
+    expect(event.progression.xpIntoLevel).toBe(0)
+  })
+
+  it('persists a quest XP grant across a reopened store', async () => {
+    const key = await testKey()
+    await store.recordQuestXp(75, key)
+    await store.destroy()
+
+    const reopened = await openProgressionStore(DB)
+    const info = await reopened.get(key)
+    expect(info.totalXp).toBe(75)
+    expect(info.cumulativeCompletions).toBe(0)
+    await reopened.destroy()
+  })
 })
