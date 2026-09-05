@@ -1,9 +1,5 @@
 export {
   buildProgression,
-  cumulativeXpForLevel,
-  levelFromTotalXp,
-  tierFromLevel,
-  xpForLevel,
   type ProgressionInfo,
   type Tier,
 } from './progression'
@@ -12,4 +8,5 @@ export {
   type ProgressionEvent,
   type ProgressionRecord,
   type ProgressionStore,
+  type ProgressionStoreOptions,
 } from './progression-store'

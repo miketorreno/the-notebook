@@ -17,6 +17,16 @@ function easyActivity() {
   })
 }
 
+function activityOn(day: string) {
+  const [y, m, d] = day.split('-').map(Number)
+  return buildActivity({
+    domain: 'Health',
+    type: 'Exercise',
+    difficulty: 'Easy',
+    now: new Date(y, m - 1, d, 12),
+  })
+}
+
 describe('progression store', () => {
   let store: ProgressionStore
 
@@ -39,6 +49,9 @@ describe('progression store', () => {
       xpToNextLevel: 100,
       tier: null,
       cumulativeCompletions: 0,
+      currentStreak: 0,
+      graceDaysUsed: 0,
+      graceDaysRemaining: 2,
     })
   })
 
@@ -156,5 +169,37 @@ describe('progression store', () => {
     info = await store.get(key)
     expect(info.totalXp).toBe(20)
     expect(info.cumulativeCompletions).toBe(2)
+  })
+
+  it('builds a grace-bridged current streak from recorded completion days', async () => {
+    const key = await testKey()
+    const pinnedStore = await openProgressionStore(DB + '-pinned-bridge', {
+      now: () => new Date(2025, 0, 10, 12),
+    })
+    await pinnedStore.recordActivity(activityOn('2025-01-08'), key)
+    await pinnedStore.recordActivity(activityOn('2025-01-10'), key)
+
+    const info = await pinnedStore.get(key)
+    expect(info.cumulativeCompletions).toBe(2)
+    expect(info.currentStreak).toBe(3)
+    expect(info.graceDaysUsed).toBe(1)
+    expect(info.graceDaysRemaining).toBe(1)
+    await pinnedStore.destroy()
+    indexedDB.deleteDatabase(DB + '-pinned-bridge')
+  })
+
+  it('resets the streak when the gap exceeds grace but keeps completions', async () => {
+    const key = await testKey()
+    const pinnedStore = await openProgressionStore(DB + '-pinned-reset', {
+      now: () => new Date(2025, 0, 10, 12),
+    })
+    await pinnedStore.recordActivity(activityOn('2025-01-06'), key)
+    await pinnedStore.recordActivity(activityOn('2025-01-10'), key)
+
+    const info = await pinnedStore.get(key)
+    expect(info.cumulativeCompletions).toBe(2)
+    expect(info.currentStreak).toBe(1)
+    await pinnedStore.destroy()
+    indexedDB.deleteDatabase(DB + '-pinned-reset')
   })
 })

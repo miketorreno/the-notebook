@@ -1,3 +1,11 @@
+import {
+  GRACE_LIMIT,
+  currentStreak,
+  dayKeyOf,
+  graceDaysUsedInWindow,
+  windowStartOf,
+} from './grace'
+
 export type Tier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum'
 
 export interface ProgressionInfo {
@@ -9,6 +17,30 @@ export interface ProgressionInfo {
   xpToNextLevel: number
   tier: Tier | null
   cumulativeCompletions: number
+  /**
+   * The active streak of consecutive completed days, bridged by grace: it
+   * stays alive through missed days until the monthly allowance runs out.
+   */
+  currentStreak: number
+  /** Missed days in the current month's window covered by grace. */
+  graceDaysUsed: number
+  /** Grace days left in the current month's window. */
+  graceDaysRemaining: number
+}
+
+/**
+ * The date of an activity as a calendar-day key (YYYY-MM-DD). Multiple
+ * activities on the same day collapse to a single day key.
+ */
+export function completionDayKey(isoTimestamp: string): string {
+  return dayKeyOf(new Date(isoTimestamp))
+}
+
+/**
+ * Deduplicate day keys, keeping at most one entry per calendar day.
+ */
+export function uniqueCompletionDays(dayKeys: string[]): string[] {
+  return [...new Set(dayKeys)]
 }
 
 /**
@@ -59,13 +91,19 @@ export function tierFromLevel(level: number): Tier | null {
 /**
  * Derive the full progression snapshot from accumulated totals. Level, XP
  * progress, and tier follow from the curve; cumulative completions are the
- * primary progress metric and always rise, never reset.
+ * primary progress metric and always rise, never reset. The current streak
+ * is secondary: it is computed from the completion-day history and bridged
+ * by the monthly grace allowance, so missing a day keeps it alive instead of
+ * resetting it.
  */
 export function buildProgression(
   totalXp: number,
   cumulativeCompletions: number,
+  completionDays: string[] = [],
+  now: Date = new Date(),
 ): ProgressionInfo {
   const level = levelFromTotalXp(totalXp)
+  const graceUsed = graceDaysUsedInWindow(completionDays, windowStartOf(now), now)
   return {
     level,
     totalXp,
@@ -73,5 +111,8 @@ export function buildProgression(
     xpToNextLevel: xpForLevel(level),
     tier: tierFromLevel(level),
     cumulativeCompletions,
+    currentStreak: currentStreak(completionDays, now),
+    graceDaysUsed: graceUsed,
+    graceDaysRemaining: Math.max(0, GRACE_LIMIT - graceUsed),
   }
 }

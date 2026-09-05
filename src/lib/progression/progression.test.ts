@@ -83,6 +83,9 @@ describe('buildProgression', () => {
       xpToNextLevel: 100,
       tier: null,
       cumulativeCompletions: 0,
+      currentStreak: 0,
+      graceDaysUsed: 0,
+      graceDaysRemaining: 2,
     })
   })
 
@@ -102,5 +105,40 @@ describe('buildProgression', () => {
     expect(atManagerLevel.tier).toBe('Bronze')
     expect(atManagerLevel.xpIntoLevel).toBe(0)
     expect(atManagerLevel.xpToNextLevel).toBe(3162)
+  })
+})
+
+describe('buildProgression streaks and grace', () => {
+  const jan10 = new Date(2025, 0, 10)
+
+  it('computes a current streak from completion days', () => {
+    const info = buildProgression(300, 3, ['2025-01-08', '2025-01-09', '2025-01-10'], jan10)
+    expect(info.cumulativeCompletions).toBe(3)
+    expect(info.currentStreak).toBe(3)
+  })
+
+  it('bridges gaps with grace without touching cumulative completions', () => {
+    const info = buildProgression(300, 3, ['2025-01-08', '2025-01-10'], jan10)
+    expect(info.cumulativeCompletions).toBe(3)
+    expect(info.currentStreak).toBe(3)
+  })
+
+  it('keeps the streak alive on a missed day without inflating it', () => {
+    const info = buildProgression(100, 1, ['2025-01-09'], jan10)
+    expect(info.currentStreak).toBe(1)
+    expect(info.graceDaysUsed).toBe(1)
+    expect(info.graceDaysRemaining).toBe(1)
+  })
+
+  it('reports grace days used and remaining in the current window', () => {
+    const info = buildProgression(200, 2, ['2025-01-08', '2025-01-10'], jan10)
+    expect(info.graceDaysUsed).toBe(1)
+    expect(info.graceDaysRemaining).toBe(1)
+  })
+
+  it('keeps cumulative completions untouched when a streak breaks', () => {
+    const info = buildProgression(200, 2, ['2025-01-06', '2025-01-10'], jan10)
+    expect(info.cumulativeCompletions).toBe(2)
+    expect(info.currentStreak).toBe(1)
   })
 })

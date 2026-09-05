@@ -4,9 +4,14 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] 2 grace days per 30-day window, resetting monthly
-- [ ] Secondary streak counter uses grace days
-- [ ] Cumulative completions are unaffected by missed days
-- [ ] Missing a day does not feel punitive in the UI
+- [x] 2 grace days per 30-day window, resetting monthly
+- [x] Secondary streak counter uses grace days
+- [x] Cumulative completions are unaffected by missed days
+- [x] Missing a day does not feel punitive in the UI
+
+## Comments
+
+Closed by commit implementing the grace module, the streak derivation, the
+persisted completion-day history, and the current-streak panel metric.

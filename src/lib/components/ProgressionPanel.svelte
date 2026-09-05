@@ -80,6 +80,16 @@
     <span class="metric-value">{progression?.cumulativeCompletions ?? 0}</span>
   </div>
 
+  <div class="metric streak">
+    <span class="metric-label">Current streak</span>
+    <div class="streak-row">
+      <span class="metric-value">{progression?.currentStreak ?? 0}</span>
+      <span class="metric-note">
+        {progression?.graceDaysRemaining ?? 2} grace day{progression?.graceDaysRemaining === 1 ? '' : 's'} left this month
+      </span>
+    </div>
+  </div>
+
   {#if levelUpNotice}
     <div class="level-up" role="status">{levelUpNotice}</div>
   {/if}
@@ -88,7 +98,7 @@
 <style>
   .progression {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
     width: 100%;
     max-width: 1100px;
@@ -128,6 +138,17 @@
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
+  }
+
+  .streak-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .metric-note {
+    font-size: 0.8rem;
+    color: var(--color-surface-500);
   }
 
   .xp-total {
