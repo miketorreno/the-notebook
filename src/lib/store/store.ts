@@ -23,10 +23,21 @@ interface DeleteArgs {
   id: string
 }
 
+interface ListArgs {
+  collection: string
+  key: CryptoKey
+}
+
+export interface StoredEntry {
+  id: string
+  value: JsonValue
+}
+
 export interface EncryptedStore {
   save(args: SaveArgs): Promise<void>
   load(args: LoadArgs): Promise<JsonValue | undefined>
   delete(args: DeleteArgs): Promise<void>
+  list(args: ListArgs): Promise<StoredEntry[]>
   destroy(): Promise<void>
 }
 
@@ -69,6 +80,35 @@ export async function openStore(
       await withStore(db, collection, 'readwrite', (objectStore) => {
         objectStore.delete(id)
       })
+    },
+
+    async list({ collection, key }: ListArgs): Promise<StoredEntry[]> {
+      const rows = await withStore(
+        db,
+        collection,
+        'readonly',
+        (objectStore) =>
+          new Promise<{ id: string; record: unknown }[]>((resolve, reject) => {
+            const rows: { id: string; record: unknown }[] = []
+            const req = objectStore.openCursor()
+            req.onsuccess = () => {
+              const cursor = req.result
+              if (!cursor) {
+                resolve(rows)
+                return
+              }
+              rows.push({ id: cursor.key as string, record: cursor.value })
+              cursor.continue()
+            }
+            req.onerror = () => reject(req.error)
+          }),
+      )
+      const entries: StoredEntry[] = []
+      for (const row of rows) {
+        const value = await decryptRecord(key, row.record as EncryptedRecord)
+        entries.push({ id: row.id, value })
+      }
+      return entries
     },
 
     async destroy(): Promise<void> {

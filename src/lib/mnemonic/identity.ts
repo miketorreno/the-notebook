@@ -14,7 +14,7 @@ export function saveRecoverySalt(salt: Uint8Array): void {
 /**
  * Load the recovery salt from localStorage, or null if none is saved.
  */
-export function loadRecoverySalt(): Uint8Array | null {
+export function loadRecoverySalt(): Uint8Array<ArrayBuffer> | null {
   const hex = localStorage.getItem(STORAGE_KEY)
   if (!hex) return null
   const bytes = new Uint8Array(hex.length / 2)
