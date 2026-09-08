@@ -4,9 +4,9 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Recovery key (12-24 word mnemonic) generated client-side
-- [ ] User must confirm the key is saved before proceeding past onboarding
-- [ ] Derived key persisted locally, never sent to a server
-- [ ] Onboarding after key save takes under 60 seconds
+- [x] Recovery key (12-24 word mnemonic) generated client-side
+- [x] User must confirm the key is saved before proceeding past onboarding
+- [x] Derived key persisted locally, never sent to a server
+- [x] Onboarding after key save takes under 60 seconds

@@ -4,9 +4,15 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] User chooses an archetype during onboarding with descriptions of each
-- [ ] Archetype framing changes how quests/activities are described
-- [ ] At least 2 archetypes implemented
-- [ ] Archetype can be changed later (with narrative justification)
+- [x] User chooses an archetype during onboarding with descriptions of each
+- [x] Archetype framing changes how quests/activities are described
+- [x] At least 2 archetypes implemented
+- [x] Archetype can be changed later (with narrative justification)
+
+## Comments
+
+Implemented in commit `d75261e`. Added an `archetype` domain module (Warrior, Sage, Builder — 3 archetypes) with `frameDomain` framing, a localStorage-backed store (archetype + change justification), an onboarding archetype step, and a "change archetype" flow that requires a narrative justification.
+
+Note: the "Archetype framing changes how quests/activities are described" item is satisfied via the `frameDomain` seam and framing display on the dashboard; quests do not exist yet (#07) and will consume the framing when built.

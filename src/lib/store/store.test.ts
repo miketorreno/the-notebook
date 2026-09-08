@@ -105,4 +105,20 @@ describe('encrypted store', () => {
     expect(loaded).toEqual({ keep: true })
     await reopened.destroy()
   })
+
+  it('lists all decrypted records in a collection as id/value pairs', async () => {
+    const key = await testKey('store test key')
+    await store.save({ collection: 'activities', id: 'a1', record: { n: 1 }, key })
+    await store.save({ collection: 'activities', id: 'a2', record: { n: 2 }, key })
+    await store.save({ collection: 'activities', id: 'a3', record: { n: 3 }, key })
+
+    const all = await store.list({ collection: 'activities', key })
+    const byId = Object.fromEntries(all.map((e) => [e.id, e.value]))
+    expect(byId).toEqual({ a1: { n: 1 }, a2: { n: 2 }, a3: { n: 3 } })
+  })
+
+  it('lists an empty array for a collection with no records', async () => {
+    const key = await testKey('store test key')
+    await expect(store.list({ collection: 'secrets', key })).resolves.toEqual([])
+  })
 })

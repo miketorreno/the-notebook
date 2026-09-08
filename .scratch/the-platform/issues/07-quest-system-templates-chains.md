@@ -4,12 +4,20 @@
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] System quests generated from templates using variable slots
-- [ ] Quests chain (completing one unlocks the next), 3-7 steps
-- [ ] Progress bars show how close a quest is to completion
-- [ ] Crystal-clear win state for each quest
-- [ ] Three-star grading: baseline + elevated + maximum
-- [ ] Completing a quest awards XP
-- [ ] Quest text uses archetype framing
+- [x] System quests generated from templates using variable slots
+- [x] Quests chain (completing one unlocks the next), 3-7 steps
+- [x] Progress bars show how close a quest is to completion
+- [x] Crystal-clear win state for each quest
+- [x] Three-star grading: baseline + elevated + maximum
+- [x] Completing a quest awards XP
+- [x] Quest text uses archetype framing
+
+## Comments
+
+Closed by the commit implementing the quest module (template catalog with
+{count}/{activity}/{domain}/{enemy}/{archetype} slots, escalating 3-7 step
+chains, three-star grading, stretch-goal upgrades, and quest XP channeled
+through the progression store), the encrypted quest chain store, and the
+quest saga panel on the dashboard.

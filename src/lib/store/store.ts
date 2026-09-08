@@ -23,10 +23,21 @@ interface DeleteArgs {
   id: string
 }
 
+interface ListArgs {
+  collection: string
+  key: CryptoKey
+}
+
+export interface StoredEntry {
+  id: string
+  value: JsonValue
+}
+
 export interface EncryptedStore {
   save(args: SaveArgs): Promise<void>
   load(args: LoadArgs): Promise<JsonValue | undefined>
   delete(args: DeleteArgs): Promise<void>
+  list(args: ListArgs): Promise<StoredEntry[]>
   destroy(): Promise<void>
 }
 
@@ -71,12 +82,47 @@ export async function openStore(
       })
     },
 
+    async list({ collection, key }: ListArgs): Promise<StoredEntry[]> {
+      const rows = await withStore(
+        db,
+        collection,
+        'readonly',
+        (objectStore) =>
+          new Promise<{ id: string; record: unknown }[]>((resolve, reject) => {
+            const rows: { id: string; record: unknown }[] = []
+            const req = objectStore.openCursor()
+            req.onsuccess = () => {
+              const cursor = req.result
+              if (!cursor) {
+                resolve(rows)
+                return
+              }
+              rows.push({ id: cursor.key as string, record: cursor.value })
+              cursor.continue()
+            }
+            req.onerror = () => reject(req.error)
+          }),
+      )
+      const entries: StoredEntry[] = []
+      for (const row of rows) {
+        const value = await decryptRecord(key, row.record as EncryptedRecord)
+        entries.push({ id: row.id, value })
+      }
+      return entries
+    },
+
     async destroy(): Promise<void> {
       db.close()
     },
   }
 }
 
+/**
+ * Open the database at its current version, creating missing object stores
+ * by bumping the schema version once when the caller asks for a collection
+ * that does not exist yet. This lets later modules extend a shared vault
+ * database regardless of which store opened it first.
+ */
 function openDatabase(
   dbName: string,
   collections: string[],
@@ -91,7 +137,30 @@ function openDatabase(
         }
       }
     }
-    request.onsuccess = () => resolve(request.result)
+    request.onsuccess = () => {
+      const db = request.result
+      const missing = collections.filter(
+        (c) => !db.objectStoreNames.contains(c),
+      )
+      if (missing.length === 0) {
+        resolve(db)
+        return
+      }
+      // The caller needs stores this database version does not have yet —
+      // close and reopen one version higher to create them.
+      db.close()
+      const upgrade = indexedDB.open(dbName, db.version + 1)
+      upgrade.onupgradeneeded = () => {
+        for (const collection of missing) {
+          if (!upgrade.result.objectStoreNames.contains(collection)) {
+            upgrade.result.createObjectStore(collection)
+          }
+        }
+      }
+      upgrade.onsuccess = () => resolve(upgrade.result)
+      upgrade.onerror = () => reject(upgrade.error)
+      upgrade.onblocked = () => reject(new Error(`Database upgrade blocked: ${dbName}`))
+    }
     request.onerror = () => reject(request.error)
   })
 }
